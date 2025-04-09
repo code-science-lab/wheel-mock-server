@@ -7,6 +7,22 @@ router.get("/", (req, res) => {
   res.json(mock.listUsers(req.query));
 });
 
+// 获取当前用户
+router.get("/current", (req, res) => {
+  // if (!req.headers.authorization) {
+  //   return res.status(401).json({
+  //     success: false,
+  //     message: "需要认证信息",
+  //   });
+  // }
+  res.json(mock.getCurrentUser());
+});
+
+// 获取通知
+router.get("/notifications", (req, res) => {
+  res.json(mock.listNotifications(req.query.limit));
+});
+
 // 创建用户
 router.post("/", (req, res) => {
   const requiredFields = ["name", "email", "password"];
@@ -58,22 +74,6 @@ router.delete("/:id", (req, res) => {
       message: "用户不存在",
     });
   }
-});
-
-// 获取当前用户
-router.get("/current", (req, res) => {
-  if (!req.headers.authorization) {
-    return res.status(401).json({
-      success: false,
-      message: "需要认证信息",
-    });
-  }
-  res.json(mock.getCurrentUser());
-});
-
-// 获取通知
-router.get("/notifications", (req, res) => {
-  res.json(mock.listNotifications(req.query.limit));
 });
 
 module.exports = router;
