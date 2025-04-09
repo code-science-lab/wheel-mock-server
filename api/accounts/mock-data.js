@@ -1,32 +1,26 @@
-const { faker } = require("@faker-js/faker");
+let lastUserId = 1000;
 
 module.exports = {
-  registerUser: {
-    success: {
+  register: (data) => {
+    lastUserId++;
+    return {
       success: true,
       message: "注册成功",
       user: {
-        id: faker.number.int({ min: 1000, max: 9999 }),
-        name: "张三",
-        email: "zhangsan@example.com",
+        id: lastUserId,
+        ...data,
         createdAt: new Date().toISOString(),
       },
-    },
+    };
   },
 
-  getAccessToken: {
-    success: {
-      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      expiresIn: 3600,
-      user: {
-        id: 12345,
-        email: "user@example.com",
-        name: "John Doe",
-      },
+  login: (credentials) => ({
+    token: "mock-jwt-token",
+    expiresIn: 3600,
+    user: {
+      id: 1,
+      email: credentials.email,
+      name: "测试用户",
     },
-    invalidCredentials: {
-      success: false,
-      message: "Invalid credentials",
-    },
-  },
+  }),
 };

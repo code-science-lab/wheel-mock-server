@@ -1,0 +1,170 @@
+openapi: 3.0.0
+info:
+  title: Account Service
+  version: 1.0.0
+paths:
+  /accounts/register:
+    post:
+      tags: [Authentication]
+      summary: 用户注册接口
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegistrationRequest"
+      responses:
+        201:
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationResponse"
+        400:
+          $ref: "#/components/responses/InvalidRequest"
+
+  /accounts/token:
+    post:
+      tags: [Authentication]
+      summary: 获取访问令牌(JWT)
+      operationId: getAccessToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: yourPassword123
+      responses:
+        200:
+          description: 认证成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        401:
+          description: 认证失败
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/InvalidCredentials"
+
+components:
+  schemas:
+    RegistrationRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 张三
+        email:
+          type: string
+          format: email
+          example: zhangsan@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 32
+
+    RegistrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 注册成功
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1001
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 张三
+        email:
+          type: string
+          format: email
+          example: zhangsan@example.com
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-08-20T09:30:00Z"
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresIn:
+          type: integer
+          example: 3600
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            email:
+              type: string
+              example: test@example.com
+            name:
+              type: string
+              example: 测试用户
+
+  responses:
+    InvalidRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: 参数校验失败
+              errors:
+                type: array
+                items:
+                  type: string
+                example: ["邮箱格式不正确"]
+
+    InvalidCredentials:
+      description: 认证失败
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: 无效的凭证

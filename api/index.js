@@ -1,8 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
-// 加载各模块路由
-router.use(require("./accounts"));
-router.use(require("./users"));
+// Import module routers
+const usersRouter = require("./users");
+const accountsRouter = require("./accounts");
+
+// Setup routes
+router.use("/users", usersRouter);
+router.use("/accounts", accountsRouter);
 
 module.exports = router;

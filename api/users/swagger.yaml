@@ -1,0 +1,291 @@
+openapi: 3.0.0
+info:
+  title: User Service
+  version: 1.0.0
+paths:
+  /users:
+    get:
+      tags: [UserManagement]
+      summary: 获取所有用户
+      operationId: listUsers
+      parameters:
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        200:
+          description: 成功返回用户列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+    post:
+      tags: [UserManagement]
+      summary: 创建新用户
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateRequest"
+      responses:
+        201:
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserOperationResponse"
+
+  /users/{id}:
+    get:
+      tags: [UserManagement]
+      summary: 获取用户详情
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: 用户详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        404:
+          description: 用户不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [UserManagement]
+      summary: 更新用户信息
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+      responses:
+        200:
+          $ref: "#/components/schemas/UserOperationResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [UserManagement]
+      summary: 删除用户
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserOperationResponse"
+        404:
+          $ref: "#/components/responses/NotFound"
+
+  /users/current:
+    get:
+      tags: [UserManagement]
+      summary: 获取当前用户信息
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: 成功返回当前用户信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUserResponse"
+
+  /users/notifications:
+    get:
+      tags: [UserManagement]
+      summary: 获取用户通知
+      operationId: listNotifications
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: 成功返回通知列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+
+components:
+  schemas:
+    User:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 测试用户
+        email:
+          type: string
+          format: email
+          example: test@example.com
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+
+    UserCreateRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 李四
+        email:
+          type: string
+          format: email
+          example: lisi@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 32
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 更新后的名字
+        email:
+          type: string
+          format: email
+          example: updated@example.com
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+
+    UserOperationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 操作成功
+        user:
+          $ref: "#/components/schemas/User"
+
+    CurrentUserResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "测试用户"
+        avatar:
+          type: string
+          example: "assets/images/users/avatar-1.jpg"
+
+    NotificationResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: message
+              title:
+                type: string
+                example: 系统通知
+              content:
+                type: string
+                example: 您有新的消息
+              created_at:
+                type: string
+                format: date-time
+        unread_count:
+          type: integer
+          example: 1
+
+  responses:
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: 用户不存在
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
