@@ -1,46 +1,38 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
-const yaml = require("js-yaml");
-const fs = require("fs");
-const path = require("path");
-const mockData = require("./mock/data");
-
+const YAML = require("yamljs");
+const apiRouter = require("./api");
+const cors = require("cors"); // 新增
 const app = express();
-const PORT = 3000;
+const swaggerDocument = YAML.load("./api/swagger.yaml");
 
-// 加载 Swagger 文档
-const swaggerDoc = yaml.load(
-  fs.readFileSync(path.join(__dirname, "api/swagger.yaml"), "utf8")
+// 配置 CORS（开发环境推荐配置）
+app.use(
+  cors({
+    origin: "http://localhost:8080", // 只允许前端地址访问
+    methods: ["GET", "POST", "PUT", "DELETE"], // 允许的 HTTP 方法
+    allowedHeaders: ["Content-Type", "Authorization"], // 允许的请求头
+  })
 );
 
-// 自定义 Mock 中间件
-app.use("/api", (req, res, next) => {
-  // GET /users
-  if (req.method === "GET" && req.path === "/users") {
-    return res.json(mockData.users);
-  }
+// 处理预检请求 (OPTIONS)
+app.options("*", cors());
+// 中间件
+app.use(bodyParser.json());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-  // GET /users/:id
-  if (req.method === "GET" && req.path.match(/^\/users\/\d+$/)) {
-    const id = parseInt(req.path.split("/").pop());
-    const user = mockData.users.find((u) => u.id === id);
-    return user ? res.json(user) : res.status(404).end();
-  }
+// 挂载 API 路由
+app.use("/api", apiRouter);
 
-  // 其他请求透传给 Swagger UI
-  next();
+// 统一错误处理
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Internal Server Error" });
 });
 
-// 配置 Swagger UI
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
-
-// 启动服务器
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`
-  Mock Server 已启动！
-  - 接口文档: http://localhost:${PORT}/docs
-  - Mock 接口示例:
-    GET http://localhost:${PORT}/api/users
-    GET http://localhost:${PORT}/api/users/1
-  `);
+  console.log(`Mock server running on port ${PORT}`);
+  console.log(`API docs: http://localhost:${PORT}/api-docs`);
 });
